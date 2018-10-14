@@ -21,29 +21,44 @@ import * as posenet from '@tensorflow-models/posenet';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 import {drawKeypoints, drawSkeleton, drawBoundingBox} from './demo_util';
-import fs from 'fs';
+import fs from 'fs.realpath';
+
+console.log("video.js // components loaded"); 
 
 const videoWidth = 600;
 const videoHeight = 500;
 const stats = new Stats();
 
+console.log("video.js // properties initialized"); 
+console.log("video.js // fs = 'fs.realpath'"); 
+
 function isAndroid() {
+		console.log("video.js // isAndroid() executing."); 
+
   return /Android/i.test(navigator.userAgent);
 }
 
 function isiOS() {
+		console.log("video.js // isiOS() executing."); 
+
   return /iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
 function isMobile() {
+		console.log("video.js // isMobile() executing."); 
+
   return isAndroid() || isiOS();
 }
+
+console.log("video.js // isAndroid(), isiOS(), and isMobile() defined."); 
 
 /**
  * Loads a the camera to be used in the demo
  *
  */
 async function setupCamera() {
+	console.log("video.js // setupCamera() executing."); 
+
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     throw new Error(
         'Browser API navigator.mediaDevices.getUserMedia not available');
@@ -74,12 +89,39 @@ async function setupCamera() {
   });
 }
 
+console.log("video.js // setupCamera() defined."); 
+
+async function setupVideo() {
+	console.log("video.js // setupVideo() executing."); 
+
+  const video = document.getElementById('video');
+  video.width = videoWidth;
+  video.height = videoHeight;
+
+  const mobile = isMobile();
+  const stream = fs.createReadStream('./assets/danceAndHumanHistory_excerpt_480p.mp4');
+  video.srcObject = stream;
+
+  return new Promise((resolve) => {
+    video.onloadedmetadata = () => {
+      resolve(video);
+    };
+  });
+}
+
+console.log("video.js // setupVideo() defined."); 
+
 async function loadVideo() {
-  const video = await setupCamera();
+	console.log("video.js // loadVideo() executing."); 
+
+  //const video = await setupCamera();
+  const video = await setupVideo();
   video.play();
 
   return video;
 }
+
+console.log("video.js // loadVideo() defined."); 
 
 const guiState = {
   algorithm: 'multi-pose',
@@ -107,10 +149,14 @@ const guiState = {
   net: null,
 };
 
+console.log("video.js // const guiState defined."); 
+
 /**
  * Sets up dat.gui controller on the top-right of the window
  */
 function setupGui(cameras, net) {
+		console.log("video.js // setupGui() executing."); 
+
   guiState.net = net;
 
   if (cameras.length > 0) {
@@ -190,19 +236,27 @@ function setupGui(cameras, net) {
   });
 }
 
+console.log("video.js // setupGui() defined."); 
+
 /**
  * Sets up a frames per second panel on the top-left of the window
  */
 function setupFPS() {
+	console.log("video.js // setupFPS() executing."); 
+
   stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
   document.body.appendChild(stats.dom);
 }
+
+console.log("video.js // setupFPS() defined."); 
 
 /**
  * Feeds an image to posenet to estimate poses - this is where the magic
  * happens. This function loops with a requestAnimationFrame method.
  */
 function detectPoseInRealTime(video, net) {
+		console.log("video.js // detectPoseInRealTime() executing."); 
+
   const canvas = document.getElementById('output');
   const ctx = canvas.getContext('2d');
   // since images are being fed from a webcam
@@ -212,6 +266,8 @@ function detectPoseInRealTime(video, net) {
   canvas.height = videoHeight;
 
   async function poseDetectionFrame() {
+	console.log("video.js // poseDetectionFrame() executing."); 
+
     if (guiState.changeToArchitecture) {
       // Important to purge variables and free up GPU memory
       guiState.net.dispose();
@@ -291,11 +347,15 @@ function detectPoseInRealTime(video, net) {
   poseDetectionFrame();
 }
 
+console.log("video.js // detectPoseInRealTime() defined."); 
+
 /**
  * Kicks off the demo by loading the posenet model, finding and loading
  * available camera devices, and setting off the detectPoseInRealTime function.
  */
 export async function bindPage() {
+		console.log("video.js // bindPage() executing."); 
+
   // Load the PoseNet model weights with architecture 0.75
   const net = await posenet.load(0.75);
 
@@ -319,7 +379,14 @@ export async function bindPage() {
   detectPoseInRealTime(video, net);
 }
 
+console.log("video.js // bindPage() defined."); 
+
 navigator.getUserMedia = navigator.getUserMedia ||
     navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+
+console.log("video.js // navigator.getUserMedia() defined."); 
+
 // kick off the demo
 bindPage();
+
+console.log("video.js // end of application."); 
