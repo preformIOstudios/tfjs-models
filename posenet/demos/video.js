@@ -21,7 +21,7 @@ import * as posenet from '@tensorflow-models/posenet';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 import {drawKeypoints, drawSkeleton, drawBoundingBox} from './demo_util';
-import fs from 'fs.realpath';
+import fs from 'fs';
 
 console.log("video.js // components loaded"); 
 
@@ -64,12 +64,11 @@ async function setupCamera() {
         'Browser API navigator.mediaDevices.getUserMedia not available');
   }
 
-  const video = document.getElementById('video');
+  const video = document.getElementById('videoCam');
   video.width = videoWidth;
   video.height = videoHeight;
 
   const mobile = isMobile();
-  ///*
   const stream = await navigator.mediaDevices.getUserMedia({
     'audio': false,
     'video': {
@@ -78,8 +77,6 @@ async function setupCamera() {
       height: mobile ? undefined : videoHeight,
     },
   });
-  //*/
-  //const stream = fs.createReadStream('../../../danceAndHumanHistory_excerpt_480p.mp4');
   video.srcObject = stream;
 
   return new Promise((resolve) => {
@@ -94,34 +91,51 @@ console.log("video.js // setupCamera() defined.");
 async function setupVideo() {
 	console.log("video.js // setupVideo() executing."); 
 
-  const video = document.getElementById('video');
+  const video = document.getElementById('videoFile');
   video.width = videoWidth;
   video.height = videoHeight;
+  // make video visible
+  // video.style.display = 'block';
 
   const mobile = isMobile();
-  const stream = fs.createReadStream('./assets/danceAndHumanHistory_excerpt_480p.mp4');
-  video.srcObject = stream;
-
+  //const stream = fs.createReadStream('./assets/danceAndHumanHistory_excerpt_480p.mp4');
+  //video.srcObject = stream;
+  
+  return video;
+  /*
   return new Promise((resolve) => {
     video.onloadedmetadata = () => {
       resolve(video);
     };
   });
+  //*/
 }
 
 console.log("video.js // setupVideo() defined."); 
 
-async function loadVideo() {
-	console.log("video.js // loadVideo() executing."); 
+async function loadVideoCam() {
+	console.log("video.js // loadVideoCam() executing."); 
 
-  //const video = await setupCamera();
-  const video = await setupVideo();
+  const video = await setupCamera();
+  setupVideo();
   video.play();
 
   return video;
 }
 
-console.log("video.js // loadVideo() defined."); 
+console.log("video.js // loadVideoCam() defined."); 
+
+async function loadVideoFile() {
+	console.log("video.js // loadVideoFile() executing."); 
+
+  const video = await setupVideo();
+  setupVideo();
+  video.play();
+
+  return video;
+}
+
+console.log("video.js // loadVideoFile() defined."); 
 
 const guiState = {
   algorithm: 'multi-pose',
@@ -256,17 +270,35 @@ console.log("video.js // setupFPS() defined.");
  */
 function detectPoseInRealTime(video, net) {
 		console.log("video.js // detectPoseInRealTime() executing."); 
+		console.log("video.js // detectPoseInRealTime() video.id = " + video.id); 
 
-  const canvas = document.getElementById('output');
-  const ctx = canvas.getContext('2d');
-  // since images are being fed from a webcam
-  const flipHorizontal = true;
+  let canvas;
+  let flipHorizontal = false;
+  let ctx;
+  switch(video.id) {
+	  case 'videoCam':
+		canvas = document.getElementById('outputCam');
+		ctx = canvas.getContext('2d');
+		// since images are being fed from a webcam
+		flipHorizontal = true;
+		break;
+	  case 'videoFile':
+		canvas = document.getElementById('outputFile');
+		ctx = canvas.getContext('2d');
+		break;
+	  default:
+		console.log("video.js // detectPoseInRealTime() unexpected video.id = " + video.id);
+		break;		
+  }
+  console.log("video.js // detectPoseInRealTime() canvas.id = " + canvas.id); 
+  console.log("video.js // detectPoseInRealTime() ctx = " + ctx.toString()); 
+  console.log("video.js // detectPoseInRealTime() flipHorizontal = " + flipHorizontal); 
 
   canvas.width = videoWidth;
   canvas.height = videoHeight;
 
   async function poseDetectionFrame() {
-	console.log("video.js // poseDetectionFrame() executing."); 
+	console.log("video.js // poseDetectionFrame() executing. flipHorizontal = " + flipHorizontal); 
 
     if (guiState.changeToArchitecture) {
       // Important to purge variables and free up GPU memory
@@ -315,9 +347,11 @@ function detectPoseInRealTime(video, net) {
 
     if (guiState.output.showVideo) {
       ctx.save();
-      ctx.scale(-1, 1);
-      ctx.translate(-videoWidth, 0);
-      ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
+	  if (flipHorizontal) {
+		  ctx.scale(-1, 1);
+		  ctx.translate(-videoWidth, 0);
+	  }
+	  ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
       ctx.restore();
     }
 
@@ -362,10 +396,11 @@ export async function bindPage() {
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';
 
-  let video;
+  let videoCam;
+  let videoFile;
 
   try {
-    video = await loadVideo();
+    videoCam = await loadVideoCam();
   } catch (e) {
     let info = document.getElementById('info');
     info.textContent = 'this browser does not support video capture,' +
@@ -373,10 +408,24 @@ export async function bindPage() {
     info.style.display = 'block';
     throw e;
   }
+  /*
+  loadVideoFile();
+  //*/
+  ///* 
+  try {
+    videoFile = await loadVideoFile();
+  }catch (e) {
+	let info = document.getElementById('info');
+    info.textContent = 'failed to load the video';
+    info.style.display = 'block';
+    throw e;
+  }
+	//*/
 
   setupGui([], net);
   setupFPS();
-  detectPoseInRealTime(video, net);
+  detectPoseInRealTime(videoCam, net);
+  detectPoseInRealTime(videoFile, net);
 }
 
 console.log("video.js // bindPage() defined."); 

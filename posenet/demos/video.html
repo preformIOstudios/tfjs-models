@@ -33,16 +33,23 @@
     <div id="loading">
         Loading the model...
     </div>
-
     <div id='main' style='display:none'>
-        <video id="video" playsinline style=" -moz-transform: scaleX(-1);
+        <video id="videoFile" src=".\assets\danceAndHumanHistory_excerpt_480p.mp4" playsinline style=" -moz-transform: scaleX(1);
+        -o-transform: scaleX(1);
+        -webkit-transform: scaleX(1);
+        transform: scaleX(1);
+        display: none;
+        ">
+        </video>
+        <canvas id="outputFile"> </canvas>
+        <video id="videoCam" playsinline style=" -moz-transform: scaleX(-1);
         -o-transform: scaleX(-1);
         -webkit-transform: scaleX(-1);
         transform: scaleX(-1);
         display: none;
         ">
         </video>
-        <canvas id="output" />
+        <canvas id="outputCam"> </canvas>
     </div>
     <div class="footer">
         <div class="footer-text">
